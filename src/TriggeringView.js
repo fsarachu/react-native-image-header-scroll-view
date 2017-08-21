@@ -9,6 +9,7 @@ class TriggeringView extends Component<*, *, *> {
   ref: *;
   height: number;
 
+  measureInitialPageY: Function;
   onScroll: Function;
   onRef: Function;
   onLayout: Function;
@@ -20,24 +21,27 @@ class TriggeringView extends Component<*, *, *> {
       hidden: false,
     };
     this.initialPageY = 0;
+    this.measureInitialPageY = this._measureInitialPageY.bind(this);
     this.onScroll = this._onScroll.bind(this);
     this.onRef = this._onRef.bind(this);
     this.onLayout = this._onLayout.bind(this);
   }
 
   componentWillMount() {
-    if (!this.context.scrollY) {
-      return;
+    if (this.context.scrollY) {
+      this.listenerId = this.context.scrollY.addListener(this.onScroll);
     }
-    this.listenerId = this.context.scrollY.addListener(this.onScroll);
   }
 
   componentWillReceiveProps(nextProps, nextContext) {
-    if (!this.context.scrollY) {
-      return;
+    if (this.context.scrollY) {
+      this.context.scrollY.removeListener(this.listenerId);
+      nextContext.scrollY.addListener(this.onScroll);
     }
-    this.context.scrollY.removeListener(this.listenerId);
-    nextContext.scrollY.addListener(this.onScroll);
+
+    if (this.context.dynamicHeaderHeight !== nextContext.dynamicHeaderHeight) {
+      this.measureInitialPageY();
+    }
   }
 
   _onRef(ref) {
@@ -47,14 +51,18 @@ class TriggeringView extends Component<*, *, *> {
   _onLayout(e) {
     const layout = e.nativeEvent.layout;
     this.height = layout.height;
-    this.ref.measure((x, y, width, height, pageX, pageY) => {
-      this.initialPageY = pageY;
-    });
+    this.measureInitialPageY();
   }
 
   _onScroll(event) {
     const pageY = this.initialPageY - event.value;
     this.triggerEvents(this.context.scrollPageY, pageY, pageY + this.height);
+  }
+
+  _measureInitialPageY() {
+    this.ref.measure((x, y, width, height, pageX, pageY) => {
+      this.initialPageY = pageY;
+    });
   }
 
   triggerEvents(value, top, bottom) {
@@ -107,6 +115,7 @@ TriggeringView.defaultProps = {
 };
 
 TriggeringView.contextTypes = {
+  dynamicHeaderHeight: React.PropTypes.number,
   scrollY: React.PropTypes.instanceOf(Animated.Value),
   scrollPageY: React.PropTypes.number,
 };

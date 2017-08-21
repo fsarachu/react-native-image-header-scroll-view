@@ -9,6 +9,7 @@ export type Props = {
   overlayColor: string,
   fadeOutForeground: boolean,
   foregroundParallaxRatio: number,
+  dynamicHeaderHeight: number,
   maxHeight: number,
   maxOverlayOpacity: number,
   minHeight: number,
@@ -65,6 +66,7 @@ class ImageHeaderScrollView extends Component<DefaultProps, Props, State> {
 
   getChildContext() {
     return {
+      dynamicHeaderHeight: this.props.dynamicHeaderHeight,
       scrollY: this.state.scrollY,
       scrollPageY: this.state.pageY + this.props.minHeight,
     };
@@ -234,6 +236,7 @@ class ImageHeaderScrollView extends Component<DefaultProps, Props, State> {
 }
 
 ImageHeaderScrollView.childContextTypes = {
+  dynamicHeaderHeight: React.PropTypes.number,
   scrollY: React.PropTypes.instanceOf(Animated.Value),
   scrollPageY: React.PropTypes.number,
 };
